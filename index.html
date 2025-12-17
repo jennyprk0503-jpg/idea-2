@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flower Flip Camera</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f5f5f5;
+        }
+
+        #canvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        /* Hidden video element for webcam feed */
+        #webcam {
+            display: none;
+        }
+
+        /* Controls panel */
+        #controls {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            min-width: 240px;
+            font-size: 14px;
+            z-index: 1000;
+        }
+
+        #controls h3 {
+            margin: 0 0 15px 0;
+            font-size: 16px;
+            color: #333;
+        }
+
+        .control-group {
+            margin-bottom: 15px;
+        }
+
+        .control-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .control-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #666;
+            font-size: 13px;
+        }
+
+        .control-group input[type="range"] {
+            width: 100%;
+        }
+
+        .control-group input[type="checkbox"] {
+            margin-right: 8px;
+        }
+
+        .value-display {
+            display: inline-block;
+            margin-left: 10px;
+            color: #999;
+            font-size: 12px;
+        }
+
+        /* Status indicator */
+        #status {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 12px 18px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            font-size: 13px;
+            color: #666;
+        }
+
+        #status.ready {
+            color: #4caf50;
+        }
+
+        #status.error {
+            color: #f44336;
+        }
+
+        /* Debug canvas */
+        #debug-canvas {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            border: 2px solid #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            display: none;
+        }
+
+        #debug-canvas.visible {
+            display: block;
+        }
+
+        /* Loading overlay */
+        #loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #f5f5f5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            z-index: 2000;
+            transition: opacity 0.3s;
+        }
+
+        #loading.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid #e0e0e0;
+            border-top-color: #9AD4D6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        #loading-text {
+            color: #666;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Main canvas -->
+    <canvas id="canvas"></canvas>
+
+    <!-- Hidden webcam video element -->
+    <video id="webcam" playsinline></video>
+
+    <!-- Debug mask canvas -->
+    <canvas id="debug-canvas" width="256" height="192"></canvas>
+
+    <!-- Loading overlay -->
+    <div id="loading">
+        <div class="spinner"></div>
+        <div id="loading-text">Initializing camera...</div>
+    </div>
+
+    <!-- Status indicator -->
+    <div id="status">Initializing...</div>
+
+    <!-- Controls -->
+    <div id="controls">
+        <h3>Controls</h3>
+
+        <div class="control-group">
+            <label>
+                Sensitivity
+                <span class="value-display" id="sensitivity-value">0.50</span>
+            </label>
+            <input type="range" id="sensitivity" min="0" max="100" value="50" step="1">
+        </div>
+
+        <div class="control-group">
+            <label>
+                Smoothing
+                <span class="value-display" id="smoothing-value">0.20</span>
+            </label>
+            <input type="range" id="smoothing" min="0" max="100" value="20" step="1">
+        </div>
+
+        <div class="control-group">
+            <label>
+                Flip Speed
+                <span class="value-display" id="flip-speed-value">1.0x</span>
+            </label>
+            <input type="range" id="flip-speed" min="10" max="50" value="25" step="1">
+        </div>
+
+        <div class="control-group">
+            <label>
+                <input type="checkbox" id="show-debug">
+                Show Mask Debug
+            </label>
+        </div>
+
+        <div class="control-group">
+            <label>
+                <input type="checkbox" id="idle-animation" checked>
+                Idle Animation
+            </label>
+        </div>
+    </div>
+
+    <script type="module" src="/src/main.js"></script>
+</body>
+</html>
