@@ -49,9 +49,14 @@ export class SegmentationEngine {
    */
   async init() {
     try {
+      console.log('[SegmentationEngine] Starting initialization...');
+
       // Initialize MediaPipe Selfie Segmentation
+      console.log('[SegmentationEngine] Loading MediaPipe model...');
+
       this.segmentation = new SelfieSegmentation({
         locateFile: (file) => {
+          console.log('[SegmentationEngine] Loading file:', file);
           return `https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/${file}`;
         }
       });
@@ -62,6 +67,8 @@ export class SegmentationEngine {
       });
 
       this.segmentation.onResults((results) => this.onResults(results));
+
+      console.log('[SegmentationEngine] MediaPipe model loaded, starting camera...');
 
       // Setup webcam
       const camera = new Camera(this.videoElement, {
@@ -79,15 +86,36 @@ export class SegmentationEngine {
         height: this.maskHeight,
       });
 
-      await camera.start();
+      // Add timeout for camera start
+      const startPromise = camera.start();
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Camera timeout - check permissions')), 15000)
+      );
+
+      await Promise.race([startPromise, timeoutPromise]);
 
       this.camera = camera;
       this.isReady = true;
 
+      console.log('[SegmentationEngine] ✓ Camera ready!');
       return true;
     } catch (err) {
-      console.error('Segmentation initialization failed:', err);
-      this.error = err.message;
+      console.error('[SegmentationEngine] ✗ Initialization failed:', err);
+
+      // More specific error messages
+      let errorMessage = err.message;
+
+      if (err.name === 'NotAllowedError') {
+        errorMessage = 'Camera permission denied. Please allow camera access and refresh.';
+      } else if (err.name === 'NotFoundError') {
+        errorMessage = 'No camera found. Please connect a webcam.';
+      } else if (err.name === 'NotReadableError') {
+        errorMessage = 'Camera is already in use by another application.';
+      } else if (err.message.includes('timeout')) {
+        errorMessage = 'Camera took too long to start. Please check permissions and try refreshing.';
+      }
+
+      this.error = errorMessage;
       return false;
     }
   }

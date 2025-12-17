@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Camera Test</title>
+    <style>
+        body {
+            font-family: monospace;
+            padding: 20px;
+            background: #1e1e1e;
+            color: #d4d4d4;
+        }
+        h1 { color: #4ec9b0; }
+        .test { margin: 15px 0; padding: 10px; background: #2d2d2d; border-radius: 4px; }
+        .pass { border-left: 4px solid #4ec9b0; }
+        .fail { border-left: 4px solid #f48771; }
+        .pending { border-left: 4px solid #ce9178; }
+        video { margin-top: 10px; border: 2px solid #4ec9b0; max-width: 400px; }
+        button {
+            background: #0e639c;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        button:hover { background: #1177bb; }
+    </style>
+</head>
+<body>
+    <h1>🔧 Flower Flip Camera - Diagnostic Test</h1>
+    <p>This page tests if your browser and camera are working correctly.</p>
+
+    <div id="test-results"></div>
+
+    <button onclick="runTests()">Run Tests</button>
+
+    <div style="margin-top: 20px;">
+        <video id="test-video" autoplay playsinline></video>
+    </div>
+
+    <script>
+        async function runTests() {
+            const results = document.getElementById('test-results');
+            results.innerHTML = '';
+
+            // Test 1: Browser compatibility
+            addTest('Checking browser compatibility...', 'pending');
+            const hasGetUserMedia = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+            updateLastTest(hasGetUserMedia ? 'pass' : 'fail',
+                hasGetUserMedia
+                    ? '✓ Browser supports getUserMedia'
+                    : '✗ Browser does not support camera access. Try Chrome or Firefox.'
+            );
+
+            if (!hasGetUserMedia) return;
+
+            // Test 2: Camera permissions
+            addTest('Requesting camera access...', 'pending');
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                updateLastTest('pass', '✓ Camera access granted');
+
+                // Test 3: Display video
+                addTest('Starting video stream...', 'pending');
+                const video = document.getElementById('test-video');
+                video.srcObject = stream;
+                video.onloadedmetadata = () => {
+                    updateLastTest('pass', `✓ Video stream active (${video.videoWidth}x${video.videoHeight})`);
+
+                    // Test 4: Check MediaPipe
+                    addTest('Checking MediaPipe libraries...', 'pending');
+                    checkMediaPipe();
+                };
+            } catch (err) {
+                let message = '✗ Camera access failed: ';
+                if (err.name === 'NotAllowedError') {
+                    message += 'Permission denied. Click the camera icon in the address bar and allow access.';
+                } else if (err.name === 'NotFoundError') {
+                    message += 'No camera found. Please connect a webcam.';
+                } else if (err.name === 'NotReadableError') {
+                    message += 'Camera is already in use by another application.';
+                } else {
+                    message += err.message;
+                }
+                updateLastTest('fail', message);
+            }
+        }
+
+        function checkMediaPipe() {
+            // Try to load MediaPipe
+            const script = document.createElement('script');
+            script.type = 'module';
+            script.textContent = `
+                import { SelfieSegmentation } from 'https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation@0.1.1675465747/selfie_segmentation.js';
+                window.mediaipipeLoaded = true;
+                console.log('MediaPipe loaded successfully');
+            `;
+            script.onerror = () => {
+                updateLastTest('fail', '✗ MediaPipe failed to load. Check internet connection.');
+            };
+            script.onload = () => {
+                setTimeout(() => {
+                    if (window.mediaipipeLoaded) {
+                        updateLastTest('pass', '✓ MediaPipe libraries can be loaded');
+                        addTest('All tests passed!', 'pass');
+                        addTest('If the main app still fails, open the browser console (F12) and look for errors.', 'pending');
+                    }
+                }, 500);
+            };
+            document.head.appendChild(script);
+        }
+
+        function addTest(message, status) {
+            const results = document.getElementById('test-results');
+            const div = document.createElement('div');
+            div.className = `test ${status}`;
+            div.textContent = message;
+            div.id = `test-${Date.now()}`;
+            results.appendChild(div);
+        }
+
+        function updateLastTest(status, message) {
+            const results = document.getElementById('test-results');
+            const lastTest = results.lastChild;
+            if (lastTest) {
+                lastTest.className = `test ${status}`;
+                lastTest.textContent = message;
+            }
+        }
+
+        // Auto-run on load
+        window.addEventListener('load', () => {
+            setTimeout(runTests, 500);
+        });
+    </script>
+</body>
+</html>

@@ -312,12 +312,47 @@ export class BackgroundSubtraction {
 
 ## 🐛 Troubleshooting
 
-### Camera not starting
+### Stuck at "Initializing camera..."
+
+If you're stuck at the initialization screen, follow these steps:
+
+1. **Run the diagnostic test** (most helpful!):
+   - Open `http://localhost:5173/test.html` in your browser
+   - This will test camera permissions, MediaPipe loading, etc.
+   - Follow the specific error messages provided
+
+2. **Check browser console** (Press F12):
+   - Look for errors in the Console tab
+   - Common issues:
+     - `NotAllowedError`: You denied camera permission → Click camera icon in address bar to allow
+     - `NotFoundError`: No camera detected → Connect a webcam
+     - `NotReadableError`: Camera in use → Close other apps using camera
+     - `Failed to fetch`: Network issue → Check internet connection (MediaPipe loads from CDN)
+
+3. **Grant camera permissions**:
+   - Look for a camera icon in your browser's address bar
+   - Click it and select "Allow"
+   - Refresh the page
+
+4. **Try a different browser**:
+   - Chrome or Edge (Chromium) are recommended
+   - Firefox works but may be slower
+   - Safari may have WebGL/MediaPipe issues
+
+5. **Check localhost is running**:
+   ```bash
+   npm run dev
+   ```
+   - Should show: `Local: http://localhost:5173/`
+   - If port is in use, Vite will use a different port
+
+### Camera not starting (general)
 
 - **Check permissions**: Ensure browser has webcam access
 - **Try different browser**: Chrome has best WebGL/webcam support
-- **Check console**: Look for error messages
+- **Check console**: Look for error messages (F12 → Console tab)
 - **HTTPS required**: Camera access needs secure context (localhost is OK)
+- **MediaPipe loading**: May take 5-10 seconds on first load (downloads from CDN)
 
 ### Poor performance / lag
 
